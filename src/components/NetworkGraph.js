@@ -17,7 +17,7 @@ const NetworkGraph = ({ data }) => {
     svg.attr('width', width).attr('height', height);
 
     const simulation = d3.forceSimulation(data.nodes)
-      .force('link', d3.forceLink(data.links).id(d => d.id))
+      .force('link', d3.forceLink(data.links).id(d => d.id).distance(100))
       .force('charge', d3.forceManyBody().strength(-1000))
       .force('center', d3.forceCenter(width / 2, height / 2));
 
@@ -26,21 +26,27 @@ const NetworkGraph = ({ data }) => {
       .data(data.links)
       .enter().append('line')
       .attr('stroke', '#999')
-      .attr('stroke-opacity', 0.6);
+      .attr('stroke-opacity', 0.6)
+      .attr('stroke-width', 2);
 
     const node = svg.append('g')
-      .selectAll('circle')
+      .selectAll('g')
       .data(data.nodes)
-      .enter().append('circle')
-      .attr('r', 20)
-      .attr('fill', d => d.color)
+      .enter().append('g')
       .call(d3.drag()
         .on('start', dragstarted)
         .on('drag', dragged)
         .on('end', dragended));
 
-    node.append('title')
-      .text(d => d.id);
+    node.append('circle')
+      .attr('r', 30)
+      .attr('fill', d => d.color);
+
+    node.append('text')
+      .text(d => d.label)
+      .attr('text-anchor', 'middle')
+      .attr('dy', '.35em')
+      .attr('fill', 'white');
 
     simulation.on('tick', () => {
       link
@@ -50,8 +56,7 @@ const NetworkGraph = ({ data }) => {
         .attr('y2', d => d.target.y);
 
       node
-        .attr('cx', d => d.x)
-        .attr('cy', d => d.y);
+        .attr('transform', d => `translate(${d.x},${d.y})`);
     });
 
     function dragstarted(event) {
@@ -72,7 +77,7 @@ const NetworkGraph = ({ data }) => {
     }
 
     node.on('click', (event, d) => {
-      navigate(`/${d.id}`);
+      navigate(d.id === 'home' ? '/' : `/${d.id}`);
     });
 
   }, [data, navigate]);
